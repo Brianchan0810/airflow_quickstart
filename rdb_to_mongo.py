@@ -61,4 +61,4 @@ with DAG(
     task1 = PythonOperator(task_id='task1', python_callable=connection_to_rdb)
     task2 = PythonOperator(task_id='task2', python_callable=connection_to_mongo)
 
-    task2 >> task1
+    task1 >> task2
