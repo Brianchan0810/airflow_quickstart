@@ -2,18 +2,30 @@ from datetime import datetime, timedelta
 
 from airflow import DAG
 from airflow.providers.mysql.hooks.mysql import MySqlHook
+from airflow.providers.mongo.hooks.mongo import MongoHook
 from airflow.operators.python import PythonOperator
 
 def connection_to_rdb():
+    print('currently inside connection_to_rdb task')
     query = 'SELECT * FROM EASY_CALL_RESULT'
-    mysql_hook = MySqlHook(schema='HTHK', connection='mysql_connection')
-    cursor = mysql_hook.get_conn()
+    mysql_hook = MySqlHook(schema='HTHK', mysql_conn_id='mysql_connection')
+    connection = mysql_hook.get_conn()
+    cursor = connection.cursor()
     cursor.execute(query)
     result = cursor.fetchall()
     for row in result:
         print(row)
-    for row in result:
-        print('col1: {0}, col2: {1}'.format(row[0], row[1]))
+
+def connection_to_mongo():
+    print('currently inside connection_to_mongo task')
+    mongo_hook = MongoHook("mongo_connection")
+    connection = mongo_hook.get_conn()
+    db = connection['HTHK_test']
+    collection = db['test']
+    result = collection.find({})
+    for item in result:
+        print(item)
+
 
 default_args = {
     'owner': 'airflow',
@@ -47,5 +59,6 @@ with DAG(
 ) as dag:
 
     task1 = PythonOperator(task_id='task1', python_callable=connection_to_rdb)
+    task2 = PythonOperator(task_id='task2', python_callable=connection_to_mongo)
 
-    task1
+    task2 >> task1
