@@ -22,14 +22,13 @@ def extract(**kwargs):
     ti.xcom_push('columns_name', columns_name)
 
 
-def transform(**kwargs):
+def transform(xcom_data, xcom_columns_name, ti):
     print('currently inside etl task')
 
     import pandas as pd
 
-    ti = kwargs['ti']
-    data = ti.xcom_pull(task_ids='extract', key='rdb_data')
-    columns_name = ti.xcom_push(task_ids='extract', key='columns_name')
+    data = xcom_data
+    columns_name = xcom_columns_name
 
     df = pd.DataFrame(data, columns=columns_name)
 
@@ -38,7 +37,9 @@ def transform(**kwargs):
         'band_01': '18-22', 'band_02': '22-30', 'band_03': '30-45', 'band_04': '45-60', 'band_05': '60 or above'})
     basic_info.drop(columns=['AGE_BAND'], inplace=True)
     basic_info_dict = basic_info.to_dict('records')
+    print(basic_info_dict)
 
+    #ti = kwargs['ti']
     ti.xcom_push('info_dict', basic_info_dict)
 
 def load(**kwargs):
@@ -91,7 +92,14 @@ with DAG(
 ) as dag:
 
     task1 = PythonOperator(task_id='extract', python_callable=extract)
-    task2 = PythonVirtualenvOperator(task_id='transform', python_callable=transform, requirements=['pandas'])
+    task2 = PythonVirtualenvOperator(
+        task_id='transform',
+        python_callable=transform,
+        requirements=['pandas'],
+        op_kwargs={"xcom_data": "{{ti.xcom_pull(task_ids='extract', key='rdb_data')}}",
+                   "xcom_columns_name": "{{ ti.xcom_pull(task_ids='extract', key='columns_name') }}"},
+        do_xcom_push=True
+    )
     task3 = PythonOperator(task_id='load', python_callable=load)
 
     task1 >> task2 >> task3
