@@ -30,6 +30,9 @@ def transform(xcom_data, xcom_columns_name):
     data = xcom_data
     columns_name = xcom_columns_name
 
+    print(columns_name)
+    print(data)
+
     df = pd.DataFrame(data, columns=columns_name)
 
     basic_info = df[['AC', 'LAST_NAME', 'FIRST_NAME', 'HKID', 'SEX', 'AGE_BAND']]
