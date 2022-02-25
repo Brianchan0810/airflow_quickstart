@@ -82,7 +82,7 @@ default_args = {
     # 'trigger_rule': 'all_success'
 }
 with DAG(
-    'rdb_mongdb_testing',
+    'etl_testing',
     default_args=default_args,
     description='',
     schedule_interval='@once',
