@@ -22,7 +22,7 @@ def extract(**kwargs):
     ti.xcom_push('columns_name', columns_name)
 
 
-def transform(xcom_data, xcom_columns_name, ti):
+def transform(xcom_data, xcom_columns_name):
     print('currently inside etl task')
 
     import pandas as pd
@@ -40,7 +40,7 @@ def transform(xcom_data, xcom_columns_name, ti):
     print(basic_info_dict)
 
     #ti = kwargs['ti']
-    ti.xcom_push('info_dict', basic_info_dict)
+    #ti.xcom_push('info_dict', basic_info_dict)
 
 def load(**kwargs):
     print('currently inside insert_data task')
@@ -98,7 +98,7 @@ with DAG(
         requirements=['pandas'],
         op_kwargs={"xcom_data": "{{ti.xcom_pull(task_ids='extract', key='rdb_data')}}",
                    "xcom_columns_name": "{{ ti.xcom_pull(task_ids='extract', key='columns_name') }}"},
-        do_xcom_push=True
+        do_xcom_push=True,
     )
     task3 = PythonOperator(task_id='load', python_callable=load)
 
